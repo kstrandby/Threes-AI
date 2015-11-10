@@ -117,7 +117,6 @@ namespace Threes_console
                 if (game.nextCard == -1) nextCard = "BONUS CARD";
                 else nextCard = game.nextCard.ToString();
                 Console.WriteLine("Next card: " + nextCard);
-                game.deck.PrintCardsLeft();
                 Console.WriteLine(GridHelper.ToString(game.currentState.Grid));
 
 
@@ -125,6 +124,11 @@ namespace Threes_console
                 PlayerMove move = new PlayerMove(action);
                 gameOver = game.SendUserAction(move);
             }
+            CleanConsole();
+            
+            Console.WriteLine("Next card: ");
+            Console.WriteLine(GridHelper.ToString(game.currentState.Grid));
+            Console.WriteLine("GAME OVER! Final score: " + game.currentState.CalculateFinalScore());
             Console.ReadLine(); // to avoid console closing immediately
         }
 

@@ -44,7 +44,7 @@ namespace Threes_console
 
                 if (countCards) this.UpdateDeckMemory();
 
-                PlayerMove action = ((PlayerMove)MinimaxAlgorithm(current, definedDepth, double.MinValue, double.MaxValue, GameEngine.PLAYER, deck.Clone()));
+                PlayerMove action = ((PlayerMove)MinimaxAlgorithm(current, definedDepth, double.MinValue, double.MaxValue, deck.Clone()));
                 if (action.Direction != (DIRECTION)(-1))
                 {
                     gameOver = game.SendUserAction(action);
@@ -52,18 +52,20 @@ namespace Threes_console
                 else
                 {
                     gameOver = true;
+                    Program.CleanConsole();
+                    Console.Write(GridHelper.ToString(current.Grid));
                 }
             }
             return current;
         }
 
-        private Move MinimaxAlgorithm(State state, int depth, double alpha, double beta, int player, Deck deck)
+        private Move MinimaxAlgorithm(State state, int depth, double alpha, double beta, Deck deck)
         {
             Move bestMove;
             if (depth == 0 || state.IsGameOver()) 
             {
                 if (state.Player == GameEngine.PLAYER)
-                {
+                {                
                     bestMove = new PlayerMove(); // default constructor creates dummy action
                     bestMove.Score = AI.Evaluate(state);
                     return bestMove;
@@ -79,7 +81,7 @@ namespace Threes_console
                     throw new Exception();
                 }
             }
-            if (player == GameEngine.PLAYER)
+            if (state.Player == GameEngine.PLAYER)
                 return Max(state, depth, alpha, beta);
             else
                 return Min(state, depth, alpha, beta);
@@ -100,6 +102,7 @@ namespace Threes_console
             }
             else
             {
+                if (deck.IsEmpty()) deck = new Deck();
                 moves = state.GetAllComputerMoves(deck);
             }
 
@@ -107,8 +110,7 @@ namespace Threes_console
             {
                 deck.Remove(((ComputerMove)move).Card);
                 State resultingState = state.ApplyMove(move);
-                currentScore = MinimaxAlgorithm(resultingState, depth - 1, alpha, beta, GameEngine.PLAYER, deck).Score;
-
+                currentScore = MinimaxAlgorithm(resultingState, depth - 1, alpha, beta, deck).Score;
                 if (currentScore < lowestScore)
                 {
                     lowestScore = currentScore;
@@ -117,6 +119,7 @@ namespace Threes_console
                 beta = Math.Min(beta, lowestScore);
                 if (beta <= alpha)
                     break;
+                deck.Add(((ComputerMove)move).Card);
             }
             bestMove.Score = lowestScore;
             return bestMove;
@@ -132,8 +135,7 @@ namespace Threes_console
             foreach (Move move in moves)
             {
                 State resultingState = state.ApplyMove(move);
-                currentScore = MinimaxAlgorithm(resultingState, depth - 1, alpha, beta, GameEngine.COMPUTER, deck).Score;
-
+                currentScore = MinimaxAlgorithm(resultingState, depth - 1, alpha, beta, deck).Score;
                 if (currentScore > highestScore)
                 {
                     highestScore = currentScore;

@@ -64,8 +64,8 @@ namespace Threes_console
                     y = random.Next(4);
                 }
 
-                // generate random value
-                int value = random.Next(1, 4);
+                // draw card form deck
+                int value = deck.DealCard();
 
                 grid[x][y] = value;
             }

@@ -60,6 +60,11 @@ namespace Threes_console
             this.cards.Remove(card);
         }
 
+        public void Add(int card)
+        {
+            this.cards.Add(card);
+        }
+
         public bool IsEmpty()
         {
             if (this.cards.Count == 0) return true;

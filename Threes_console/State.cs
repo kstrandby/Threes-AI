@@ -136,7 +136,7 @@ namespace Threes_console
 
         private List<Move> AddComputerMovesAfterLeft(List<Move> moves, int cardToAdd)
         {
-            foreach (int i in columnsOrRowsWithMovedTiles)
+            foreach (int i in columnsOrRowsWithMovedTiles.Distinct())
             {
                 moves.Add(new ComputerMove(cardToAdd, new Tuple<int, int>(3, i)));
             }
@@ -145,7 +145,7 @@ namespace Threes_console
 
         private List<Move> AddComputerMovesAfterRight(List<Move> moves, int cardToAdd)
         {
-            foreach (int i in columnsOrRowsWithMovedTiles)
+            foreach (int i in columnsOrRowsWithMovedTiles.Distinct())
             {
                 moves.Add(new ComputerMove(cardToAdd, new Tuple<int,int>(0, i)));
             }
@@ -154,7 +154,7 @@ namespace Threes_console
 
         private List<Move> AddComputerMovesAfterUp(List<Move> moves, int cardToAdd)
         {
-            foreach (int i in columnsOrRowsWithMovedTiles)
+            foreach (int i in columnsOrRowsWithMovedTiles.Distinct())
             {
                 moves.Add(new ComputerMove(cardToAdd, new Tuple<int, int>(i, 0)));
             }
@@ -163,7 +163,7 @@ namespace Threes_console
 
         private List<Move> AddComputerMovesAfterDown(List<Move> moves, int cardToAdd)
         {
-            foreach (int i in columnsOrRowsWithMovedTiles)
+            foreach (int i in columnsOrRowsWithMovedTiles.Distinct())
             {
                 moves.Add(new ComputerMove(cardToAdd, new Tuple<int, int>(i, 3)));
             }
@@ -548,6 +548,21 @@ namespace Threes_console
             {
                 throw new Exception();
             }
+        }
+        public int CalculateFinalScore()
+        {
+            int score = 0;
+            for (int i = 0; i < GameEngine.COLUMNS; i++)
+            {
+                for (int j = 0; j < GameEngine.ROWS; j++)
+                {
+                    if (grid[i][j] != 1 && grid[i][j] != 2 && grid[i][j] != 0)
+                    {
+                        score += GameEngine.TILE_TO_POINTS_DICT[grid[i][j]];
+                    }
+                }
+            }
+            return score;
         }
     }
 }
