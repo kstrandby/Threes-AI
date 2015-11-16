@@ -8,12 +8,12 @@ namespace Threes_console
 {
     public class Minimax
     {
+        private const int SIM_FREQUENCY = 500;
+
         private GameEngine game;
         private int definedDepth;
         private State current;
         private Deck deck;
-
-        private bool countCards;
 
         public Minimax(GameEngine game, int depth)
         {
@@ -21,33 +21,35 @@ namespace Threes_console
             this.definedDepth = depth;
             this.current = new State(game.currentState.Grid, GameEngine.PLAYER);
             this.deck = new Deck();
-            this.countCards = false;
-        }
-
-        public void CountCards(bool b)
-        {
-            this.countCards = b;
         }
 
         internal State Run(bool print)
         {
             bool gameOver = false;
+
+            // update deck memory initially with observed cards on board
+            this.UpdateDeckMemory(0, true);
+            current = new State(game.currentState.Grid, GameEngine.PLAYER);
+            int nextCard = game.nextCard;
+
             while (!gameOver)
             {
                 if (print)
                 {
                     Program.CleanConsole();
                     Console.Write(GridHelper.ToString(current.Grid));
-                    Thread.Sleep(500);
+                    Thread.Sleep(SIM_FREQUENCY);
                 }
-                current = new State(game.currentState.Grid, GameEngine.PLAYER);
 
-                if (countCards) this.UpdateDeckMemory();
 
                 PlayerMove action = ((PlayerMove)MinimaxAlgorithm(current, definedDepth, double.MinValue, double.MaxValue, deck.Clone()));
                 if (action.Direction != (DIRECTION)(-1))
                 {
                     gameOver = game.SendUserAction(action);
+                    current = new State(game.currentState.Grid, GameEngine.PLAYER);
+                    if(nextCard > 0) this.UpdateDeckMemory(nextCard, false);
+                    nextCard = game.nextCard;
+
                 }
                 else
                 {
@@ -108,6 +110,7 @@ namespace Threes_console
 
             foreach (Move move in moves)
             {
+
                 deck.Remove(((ComputerMove)move).Card);
                 State resultingState = state.ApplyMove(move);
                 currentScore = MinimaxAlgorithm(resultingState, depth - 1, alpha, beta, deck).Score;
@@ -153,12 +156,28 @@ namespace Threes_console
         /*
          * To take advantage of the fact that we can count cards
          */
-        private void UpdateDeckMemory()
+        private void UpdateDeckMemory(int card, bool firstMove)
         {
-            deck.Remove(((ComputerMove)current.GeneratingMove).Card); // remove the observed card from our deck memory
-            if (deck.IsEmpty())
+            if (firstMove)
             {
-                deck = new Deck();
+                for (int i = 0; i < GameEngine.COLUMNS; i++)
+                {
+                    for (int j = 0; j < GameEngine.ROWS; j++)
+                    {
+                        if (current.Grid[i][j] != 0)
+                        {
+                            deck.Remove(current.Grid[i][j]);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                deck.Remove(card); // remove the observed card from our deck memory
+                if (deck.IsEmpty())
+                {
+                    deck = new Deck();
+                }
             }
         }
     }

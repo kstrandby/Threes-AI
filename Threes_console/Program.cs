@@ -12,16 +12,25 @@ namespace Threes_console
 {
     class Program
     {
+        const String MINIMAX_LOG_FILE_NAME = @"Minimax.txt";
+        const String EXPECTIMAX_LOG_FILE_NAME = @"Expectimax.txt";
+
+        enum TYPE
+        {
+            MINIMAX,
+            EXPECTIMAX
+        }
         static void Main(string[] args)
         {
-            Console.SetCursorPosition(0, 0);
             ShowMenu();       
         }
 
         private static void ShowMenu()
         {
+            Console.SetCursorPosition(0, 0);
             Console.WriteLine("Please choose what you want to do: ");
-            Console.WriteLine("0: Play Threes\n1: Let AI Minimax play Threes");
+            Console.WriteLine("0: Play Threes\n1: Let AI Minimax play Threes\n2: Let AI Expectimax play Threes");
+            
             int choice = Convert.ToInt32(Console.ReadLine());
             if (choice == 0)
             {
@@ -31,76 +40,156 @@ namespace Threes_console
             {
                 RunMinimax();
             }
+            else if (choice == 2)
+            {
+                RunExpectimax();
+            }
         }
 
         private static void RunMinimax()
         {
-            int choice = SimulationOrGraphicRun();
-            if (choice == 1) // graphic run
+            int choice = TestRunsOrGraphicRun();
+            if (choice == 1) 
             {
-                Console.WriteLine("Depth?");
-                int depth = Convert.ToInt32(Console.ReadLine());
-                GameEngine game = new GameEngine();
-                Minimax minimax = new Minimax(game, depth);
-                minimax.Run(true);
+                RunGraphicAIGame(TYPE.MINIMAX);
             }
             else if (choice == 2) // multiple simulations
             {
-                Console.WriteLine("Number of runs?");
-                int runs = Convert.ToInt32(Console.ReadLine());
-                Console.WriteLine("Depth?");
-                int depth = Convert.ToInt32(Console.ReadLine());
-
-
-                StreamWriter writer = new StreamWriter(@"C:\Users\Kristine\Documents\Visual Studio 2013\Projects\Threes_console\Minimax_PointsHeuristic.txt", true);
-                int num192 = 0;
-                int num384 = 0;
-                int num768 = 0;
-                int num1536 = 0;
-                int num3072 = 0;
-                int num6144 = 0;
-
-                for (int i = 0; i < runs; i++)
-                {
-                    Console.Write(i + ": ");
-                    GameEngine game = new GameEngine();
-                    Minimax minimax = new Minimax(game, depth);
-
-                    var watch = Stopwatch.StartNew();
-                    State endState = minimax.Run(false);
-
-                    watch.Stop();
-                    var elapsedMs = watch.ElapsedMilliseconds;
-                    Console.WriteLine("Execution time: " + elapsedMs + " ms");
-
-                    int highestTile = GridHelper.GetHighestCard(endState.Grid);
-                    int score = game.CalculateFinalScore();
-                    writer.WriteLine("{0,0}{1,10}{2,15}{3,12}{4,15}", i, depth, highestTile, score, elapsedMs);
-                    if (highestTile >= 192) num192++;
-                    if (highestTile >= 384) num384++;
-                    if (highestTile >= 768) num768++;
-                    if (highestTile >= 1536) num1536++;
-                    if (highestTile >= 3072) num3072++;
-                    if (highestTile >= 6144) num6144++;
-                }
-                writer.Close();
-                Console.WriteLine("192: " + (double)num192 / runs * 100 
-                    + "%, 384: " + (double)num384 / runs * 100 
-                    + "%, 768: " + (double)num768 / runs * 100 
-                    + "%, 1536: " + (double)num1536 / runs * 100
-                    + "%, 3072: " + (double)num3072 / runs * 100
-                    + "%, 6144: " + (double)num6144 / runs * 100 
-                    + "%");
-
+                RunMultipleTests(TYPE.MINIMAX);
             }
             
             Console.ReadLine(); // to avoid console closing immediately
         }
 
-        private static int SimulationOrGraphicRun()
+        private static void RunExpectimax()
         {
-            Console.WriteLine("1: Graphic run\n2: Simulate multiple runs");
+            int choice = TestRunsOrGraphicRun();
+            if (choice == 1)
+            {
+                RunGraphicAIGame(TYPE.EXPECTIMAX);
+            }
+            else if (choice == 2)
+            {
+                RunMultipleTests(TYPE.EXPECTIMAX);
+            }
+            Console.ReadLine();
+        }
+
+        private static void RunGraphicAIGame(TYPE AItype)
+        {
+            if (AItype == TYPE.MINIMAX)
+            {
+                int depth = GetDepth();
+                GameEngine game = new GameEngine();
+                Minimax minimax = new Minimax(game, depth);
+                minimax.Run(true);
+            }
+        }
+
+        private static void RunMultipleTests(TYPE AItype)
+        {
+            if (AItype == TYPE.MINIMAX)
+            {
+                int runs = GetRuns();
+                int depth = GetDepth();
+
+                StreamWriter writer = new StreamWriter(MINIMAX_LOG_FILE_NAME, true);
+                Dictionary<int, int> highCardCount = new Dictionary<int, int>() { { 192, 0 }, { 384, 0 }, { 768, 0 }, { 1536, 0 }, { 3072, 0 }, { 6144, 0 } };
+                
+                for (int i = 0; i < runs; i++)
+                {
+                    GameEngine game = new GameEngine();
+                    Minimax minimax = new Minimax(game, depth);
+
+                    var watch = Stopwatch.StartNew();
+                    State endState = minimax.Run(false);
+                    watch.Stop();
+                    var elapsedMs = watch.ElapsedMilliseconds;
+
+                    int highestTile = GridHelper.GetHighestCard(endState.Grid);
+                    int score = game.CalculateFinalScore();
+                   
+                    String stats = i + "\t" + depth + "\t" + highestTile + "\t" + score + "\t" + elapsedMs;
+                    Console.WriteLine(stats);
+                    writer.WriteLine(stats);
+
+                    List<int> keys = new List<int>(highCardCount.Keys);
+                    for (int j = 0; j < keys.Count; j++) 
+                    {
+
+                        if (highestTile >= keys[j]) highCardCount[keys[j]]++;
+                    }
+                }
+                writer.Close();
+                Console.WriteLine(GetStatistics(highCardCount, runs));
+            }
+
+            else if (AItype == TYPE.EXPECTIMAX)
+            {
+                int runs = GetRuns();
+                int depth = GetDepth();
+
+                StreamWriter writer = new StreamWriter(EXPECTIMAX_LOG_FILE_NAME, true);
+                Dictionary<int, int> highCardCount = new Dictionary<int, int>() { { 192, 0 }, { 384, 0 }, { 768, 0 }, { 1536, 0 }, { 3072, 0 }, { 6144, 0 } };
+
+                for (int i = 0; i < runs; i++)
+                {
+                    GameEngine game = new GameEngine();
+                    Expectimax expectimax = new Expectimax(game, depth);
+
+                    var watch = Stopwatch.StartNew();
+                    State endState = expectimax.Run(false);
+                    watch.Stop();
+                    var elapsedMs = watch.ElapsedMilliseconds;
+
+                    int highestTile = GridHelper.GetHighestCard(endState.Grid);
+                    int score = game.CalculateFinalScore();
+
+                    String stats = i + "\t" + depth + "\t" + highestTile + "\t" + score + "\t" + elapsedMs;
+                    Console.WriteLine(stats);
+                    writer.WriteLine(stats);
+
+                    List<int> keys = new List<int>(highCardCount.Keys);
+                    for (int j = 0; j < keys.Count; j++)
+                    {
+
+                        if (highestTile >= keys[j]) highCardCount[keys[j]]++;
+                    }
+                }
+                writer.Close();
+                Console.WriteLine(GetStatistics(highCardCount, runs));
+            }
+        }
+
+        private static String GetStatistics(Dictionary<int, int> highCardCount, int runs)
+        {
+            return "192: " + (double)highCardCount[192] / runs * 100
+                    + "%, 384: " + (double)highCardCount[384] / runs * 100
+                    + "%, 768: " + (double)highCardCount[768] / runs * 100
+                    + "%, 1536: " + (double)highCardCount[1536] / runs * 100
+                    + "%, 3072: " + (double)highCardCount[3072] / runs * 100
+                    + "%, 6144: " + (double)highCardCount[6144] / runs * 100
+                    + "%";
+        }
+
+        private static int TestRunsOrGraphicRun()
+        {
+            Console.WriteLine("1: Graphic run\n2: Test runs");
             return Convert.ToInt32(Console.ReadLine());
+        }
+
+        private static int GetRuns()
+        {
+            Console.WriteLine("Number of runs?");
+            int runs = Convert.ToInt32(Console.ReadLine());
+            return runs;
+        }
+
+        private static int GetDepth()
+        {
+            Console.WriteLine("Depth?");
+            int depth = Convert.ToInt32(Console.ReadLine());
+            return depth;
         }
 
         private static void StartGame()

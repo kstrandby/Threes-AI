@@ -84,6 +84,33 @@ namespace Threes_console
         public List<Move> GetAllComputerMoves(int nextCard)
         {
             List<Move> moves = new List<Move>();
+            if (nextCard == -1) // bonus card
+            {
+                List<int> bonusCards = this.GeneratePossibleBonusCards();
+                foreach (int card in bonusCards)
+                {
+                    switch (((PlayerMove)generatingMove).Direction)
+                    {
+
+                        case DIRECTION.LEFT:
+                            return AddComputerMovesAfterLeft(moves, card);
+
+                        case DIRECTION.RIGHT:
+                            return AddComputerMovesAfterRight(moves, card);
+
+                        case DIRECTION.UP:
+                            return AddComputerMovesAfterUp(moves, card);
+
+                        case DIRECTION.DOWN:
+                            return AddComputerMovesAfterDown(moves, card);
+
+                        default:
+                            throw new Exception();
+                    }
+                }
+                return moves;
+            }
+            
 
             switch(((PlayerMove)generatingMove).Direction) {
                 

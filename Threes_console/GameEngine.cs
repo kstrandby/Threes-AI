@@ -101,7 +101,7 @@ namespace Threes_console
             {
                 for (int j = 0; j < ROWS; j++)
                 {
-                    if (currentState.Grid[i][j] != 1 && currentState.Grid[i][j] != 2)
+                    if (currentState.Grid[i][j] > 2)
                     {
                         score += TILE_TO_POINTS_DICT[currentState.Grid[i][j]];
                     }
