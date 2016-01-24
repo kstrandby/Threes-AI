@@ -6,28 +6,37 @@ using System.Threading.Tasks;
 
 namespace Threes_console
 {
+    // static class holding heuristic functions and providing evaluation function
     public static class AI
     {
+        // weights
+        const double smoothness_weight = 0.1;
+        const double monotonicity_weight = 1.0;
+        const double emptycells_weight = 0.5;
+        const double highestvalue_weight = 1.0;
+        const double snake_weight = 0.5;
+        const double trappedpenalty_weight = 2.0;
 
-        // Weight constants
-        const double emptycells_weight = 5.0;
-        const double mergeability_weight = 1.0;
-        const double trappedpenalty_weight = 1.0;
-
+        // Evaluation function used by Minimax and Expectimax
         public static double Evaluate(State state)
         {
             if (state.IsGameOver()) return -1000;
 
-            return WeightSnake(state);
+            double smoothness = Smoothness(state);
+            double monotonicity = Monotonicity(state);
+            double emptycells = EmptyCells(state);
+            double highestvalue = HighestCard(state);
+            double trappedpenalty = TrappedPenalty(state);
+            return smoothness_weight * smoothness + monotonicity_weight * monotonicity + emptycells_weight * emptycells + highestvalue_weight * highestvalue - trappedpenalty_weight * trappedpenalty;
         }
 
-
+        // Returns the highest card on board
         public static double HighestCard(State state)
         {
-            return GridHelper.GetHighestCard(state.Grid);
+            return BoardHelper.GetHighestCard(state.Grid);
         }
 
-
+        // Returns number of empty cells on board
         public static double EmptyCells(State state)
         {
             double numEptyCells = 0;
@@ -44,11 +53,14 @@ namespace Threes_console
             return numEptyCells;
         }
 
+        // Returns the point score of the given game state
         public static double Points(State state)
         {
             return state.CalculateFinalScore();
         }
 
+        // Returns the number of trapped cards in the game state
+        // Use this heuristic as a penalty, i.e. subtract it 
         public static double TrappedPenalty(State state)
         {
             double trapped = 0;
@@ -97,7 +109,6 @@ namespace Threes_console
                             }
                         }
 
-
                         // check neighbours in horizontal direction
                         int neighbourColumnToRight = i + 1;
                         int neighbourColumnToLeft = i - 1;
@@ -141,7 +152,7 @@ namespace Threes_console
             return trapped;
         }
 
-
+        // Counts number of merges on board
         public static double Mergeability(State state)
         {
             double numMerges = 0;
@@ -181,8 +192,6 @@ namespace Threes_console
         // returns a score ranking a state according to how the tiles are increasing/decreasing in all directions
         // increasing/decreasing in the same directions (for example generally increasing in up and right direction) will return higher score 
         // than a state increasing in one row and decreasing in another row
-
-        // range: {-192, 0}
         public static double Monotonicity(State state)
         {
             double left = 0;
@@ -264,7 +273,8 @@ namespace Threes_console
             return Math.Max(up, down) + Math.Max(left, right);
         }
 
-
+        // Ranks the state according to how smooth it is
+        // Smoothness prefers cards of similar values next to each other
         public static double Smoothness(State state)
         {
             double smoothness = 0;
@@ -278,10 +288,9 @@ namespace Threes_console
                         if (state.Grid[i][j] == 1 || state.Grid[i][j] == 2) currentValue = 1;
                         else currentValue = Math.Log(state.Grid[i][j] / 3) / Math.Log(2) + 2;
 
-
                         // we only check right and up for each tile
-                        Cell nearestTileRight = FindNearestTile(new Cell(i, j), DIRECTION.RIGHT, state.Grid);
-                        Cell nearestTileUp = FindNearestTile(new Cell(i, j), DIRECTION.UP, state.Grid);
+                        Cell nearestTileRight = FindNearestCard(new Cell(i, j), DIRECTION.RIGHT, state.Grid);
+                        Cell nearestTileUp = FindNearestCard(new Cell(i, j), DIRECTION.UP, state.Grid);
 
                         // check that we found a tile (do not take empty cells into account)
                         if (nearestTileRight.IsValid() && state.Grid[nearestTileRight.x][nearestTileRight.y] != 0)
@@ -305,8 +314,9 @@ namespace Threes_console
             return -smoothness;
         }
 
-
-        public static Cell FindNearestTile(Cell from, DIRECTION dir, int[][] grid)
+        // Used by Smoothness heuristic
+        // Finds the nearest card in a certain direction from another card
+        public static Cell FindNearestCard(Cell from, DIRECTION dir, int[][] grid)
         {
             int x = from.x, y = from.y;
             if (dir == DIRECTION.LEFT)
@@ -440,7 +450,7 @@ namespace Threes_console
             return sums.Max();
         }
 
-
+        // Arranges tiles in a corner and prefers higher cards along edges
         public static double Corner(State state)
         {
             double[][] corner1 = new double[][] {

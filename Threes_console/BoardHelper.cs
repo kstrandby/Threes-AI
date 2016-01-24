@@ -7,8 +7,10 @@ using Threes_console;
 
 namespace Threes_console
 {
-    static class GridHelper
+    // Static class providing methods for dealing wih the game board
+    static class BoardHelper
     {
+        // Clones the grid, returns the clone
         public static int[][] CloneGrid(int[][] grid)
         {
             int[][] newGrid = new int[grid.Length][];
@@ -19,6 +21,7 @@ namespace Threes_console
             return newGrid;
         }
 
+        // Returns string representation of the board
         public static string ToString(int[][] array)
         {
             string representation = "";
@@ -47,6 +50,7 @@ namespace Threes_console
             return representation;
         }
 
+        // Finds and returns the highest card on the board
         internal static int GetHighestCard(int[][] grid)
         {
             int highestCard = 0;
@@ -60,6 +64,7 @@ namespace Threes_console
             return highestCard;
         }
 
+        // Checks if the board is in a game over state
         internal static bool IsGameOver(int[][] grid)
         {
             int[] directions = { -1, 1 };

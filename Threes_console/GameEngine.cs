@@ -1,18 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Threes_console
 {
-
+    // class to hold all game logic
     public class GameEngine
     {
         // constants
         public const int COLUMNS = 4, ROWS = 4;
         public const float BONUS_CARD_PROB = 1.0f / 21.0f;
         public const int PLAYER = 1, COMPUTER = 0;
+
+        // Dictionary that translates card values to points
         public static Dictionary<int, int> TILE_TO_POINTS_DICT = new Dictionary<int, int>() {
             {3, 3},
             {6, 9},
@@ -42,6 +45,7 @@ namespace Threes_console
             UpdatePeekCard();
         }
 
+        // Initializes the grid, adding the 9 initial random cards
         private int[][] initializeGrid()
         {
             int[][] grid = new int[ROWS][];
@@ -72,8 +76,8 @@ namespace Threes_console
             return grid;
         }
 
-
-
+       // Takes a player action and executes it, updates peek card and
+        // generates a new random tile
         public bool SendUserAction(PlayerMove action)
         {
             currentState = currentState.ApplyMove(action);
@@ -81,12 +85,9 @@ namespace Threes_console
             // only continue game if action was valid (if something moved on the grid)
             if (currentState.columnsOrRowsWithMovedTiles.Count != 0)
             {
-                 GenerateNewTile();
+                 GenerateNewCard();
                  if (CheckForGameOver())
                  {
-                    int points = CalculateFinalScore();
-                    Console.WriteLine("GAME OVER!");
-                    Console.WriteLine("Score = " + points);
                     return true;
                 }
                 UpdatePeekCard();
@@ -94,6 +95,7 @@ namespace Threes_console
             return false;            
         }
 
+        // Calculates the final score of game over state
         public int CalculateFinalScore()
         {
             int score = 0;
@@ -110,11 +112,12 @@ namespace Threes_console
             return score;
         }
 
+        // Updates the peek card
         private void UpdatePeekCard()
         {
             // should next card be a bonus card?
             double i = random.NextDouble();
-            if (GridHelper.GetHighestCard(currentState.Grid) >= 48 && i < BONUS_CARD_PROB)
+            if (BoardHelper.GetHighestCard(currentState.Grid) >= 48 && i < BONUS_CARD_PROB)
             {
                 nextCard = -1;
                 nextIsBonus = true;
@@ -126,17 +129,22 @@ namespace Threes_console
             }
         }
 
-        private void GenerateNewTile()
+        // Generates a new card on the board
+        private void GenerateNewCard()
         {
+            int numTiles = 0;
+
             int card = 0;
             if (nextIsBonus)
             {
                 List<int> possibleBonusCards = currentState.GeneratePossibleBonusCards();
                 card = possibleBonusCards[random.Next(0, possibleBonusCards.Count)];
+                numTiles = possibleBonusCards.Count * currentState.columnsOrRowsWithMovedTiles.Count;
             }
             else
             {
                 card = deck.DealCard();
+                numTiles = currentState.columnsOrRowsWithMovedTiles.Count * 3;
             }
             
             // decide on position to put new tile
@@ -169,6 +177,7 @@ namespace Threes_console
             currentState.GeneratingMove = move;
         }
 
+        // Checks if the current game state is game over
         public bool CheckForGameOver()
         {
             int[] directions = { -1, 1 };

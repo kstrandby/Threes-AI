@@ -13,6 +13,7 @@ namespace Threes_console
         DOWN = 3
     }
 
+    // Class representing a move
     public class Move
     {
         private double score;
@@ -33,6 +34,7 @@ namespace Threes_console
         }
     }
 
+    // Subclass of move representing a player move (a direction)
     public class PlayerMove : Move {
 
         private DIRECTION direction;
@@ -59,6 +61,7 @@ namespace Threes_console
         }
     }
 
+    // Subclass of move representing a computer move (position of a card)
     public class ComputerMove : Move {
 
         private int card;

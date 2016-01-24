@@ -5,8 +5,11 @@ using System.Text;
 
 namespace Threes_console
 {
+    // Class to represent a game state
     public class State
     {
+        private Random random;
+
         private int[][] grid;
         public int[][] Grid
         {
@@ -48,9 +51,9 @@ namespace Threes_console
         }
         internal List<int> columnsOrRowsWithMovedTiles;
 
-
         public State(int[][] grid, int player)
         {
+            this.random = new Random();
             this.grid = grid;
             this.player = player;
             if (player == GameEngine.COMPUTER)
@@ -64,6 +67,16 @@ namespace Threes_console
             
         }
 
+        // Returns a clone of the state
+        public State Clone()
+        {
+            return new State(BoardHelper.CloneGrid(this.grid), this.player);
+        }
+
+        // Returns a list of all possible moves in the state,
+        // whether it being player moves in case of a state where the player is about
+        // to move, or it being computer moves in case of a state where the computer
+        // is about to place a new card
         public List<Move> GetAllMoves()
         {
             if (player == GameEngine.PLAYER)
@@ -110,8 +123,8 @@ namespace Threes_console
                 }
                 return moves;
             }
-            
 
+            // else the case is a specific card
             switch(((PlayerMove)generatingMove).Direction) {
                 
                 case DIRECTION.LEFT:
@@ -131,6 +144,7 @@ namespace Threes_console
             }
         }
 
+        // Returns a list of all available computer moves given a deck
         public List<Move> GetAllComputerMoves(Deck deck)
         {
             IEnumerable<int> cardsLeft = deck.GetAllCards().Distinct(); // get all distinct cards left
@@ -161,6 +175,7 @@ namespace Threes_console
 
         }
 
+        // Adds computer moves after a left swipe to a list
         private List<Move> AddComputerMovesAfterLeft(List<Move> moves, int cardToAdd)
         {
             foreach (int i in columnsOrRowsWithMovedTiles.Distinct())
@@ -170,6 +185,7 @@ namespace Threes_console
             return moves;
         }
 
+        // Adds computer moves after a right swipe to a list
         private List<Move> AddComputerMovesAfterRight(List<Move> moves, int cardToAdd)
         {
             foreach (int i in columnsOrRowsWithMovedTiles.Distinct())
@@ -179,6 +195,7 @@ namespace Threes_console
             return moves;
         }
 
+        // Adds computer moves after an up swipe to a list
         private List<Move> AddComputerMovesAfterUp(List<Move> moves, int cardToAdd)
         {
             foreach (int i in columnsOrRowsWithMovedTiles.Distinct())
@@ -188,6 +205,7 @@ namespace Threes_console
             return moves;
         }
 
+        // Adds computer moves after a down swipe to a list
         private List<Move> AddComputerMovesAfterDown(List<Move> moves, int cardToAdd)
         {
             foreach (int i in columnsOrRowsWithMovedTiles.Distinct())
@@ -197,6 +215,7 @@ namespace Threes_console
             return moves;
         }
 
+        // Returns all computer moves in a list
         private List<Move> GetAllComputerMoves()
         {
             List<Move> moves = new List<Move>(); 
@@ -253,10 +272,10 @@ namespace Threes_console
             {
                 throw new Exception();
             }
-
             return moves;
         }
 
+        // Returns a list of all player moves
         private List<Move> GetAllPlayerMoves()
         {
             List<Move> moves = new List<Move>();
@@ -271,11 +290,12 @@ namespace Threes_console
             return moves;
         }
 
+        // Applies the move and returns the result state
         internal State ApplyMove(Move move)
         {
             if (move is PlayerMove)
             {
-                State result = new State(GridHelper.CloneGrid(this.grid), GameEngine.COMPUTER);
+                State result = new State(BoardHelper.CloneGrid(this.grid), GameEngine.COMPUTER);
                 if (((PlayerMove)move).Direction == DIRECTION.LEFT)
                 {
                     return result.ApplyLeft();
@@ -296,7 +316,7 @@ namespace Threes_console
             }
             else if (move is ComputerMove)
             {
-                State result = new State(GridHelper.CloneGrid(this.grid), GameEngine.PLAYER);
+                State result = new State(BoardHelper.CloneGrid(this.grid), GameEngine.PLAYER);
                 result.grid[((ComputerMove)move).Position.Item1][((ComputerMove)move).Position.Item2] = ((ComputerMove)move).Card;
                 result.generatingMove = (ComputerMove)move;
                 return result;
@@ -415,6 +435,7 @@ namespace Threes_console
             return this;
         }
 
+        // Merges two tiles in the state
         private void MergeTiles(int i1, int j1, int i2, int j2)
         {
             int newValue = grid[i1][j1] + grid[i2][j2];
@@ -422,6 +443,7 @@ namespace Threes_console
             grid[i2][j2] = newValue;
         }
 
+        // Moves a tile in the state
         private void MoveTile(int old_i, int old_j, int new_i, int new_j)
         {
             int value = grid[old_i][old_j];
@@ -429,9 +451,10 @@ namespace Threes_console
             grid[new_i][new_j] = value;
         }
 
+        // Generates a list of all the possible bonus cards in the state
         public List<int> GeneratePossibleBonusCards()
         {
-            int highestCard = GridHelper.GetHighestCard(grid);
+            int highestCard = BoardHelper.GetHighestCard(grid);
             List<int> bonusCards = new List<int>();
             for (int i = 6; i <= highestCard / 8; i *= 2)
             {
@@ -440,6 +463,7 @@ namespace Threes_console
             return bonusCards;
         }
 
+        // Checks if the state is a game over state
         public bool IsGameOver()
         {
             int[] directions = { -1, 1 };
@@ -467,6 +491,7 @@ namespace Threes_console
             return true;
         }
 
+        // Checks if a move is valid
         private bool IsValidMove(DIRECTION direction)
         {
             int occupied = 0;
@@ -576,6 +601,8 @@ namespace Threes_console
                 throw new Exception();
             }
         }
+
+        // Calculates the final score of a state
         public int CalculateFinalScore()
         {
             int score = 0;
@@ -590,6 +617,33 @@ namespace Threes_console
                 }
             }
             return score;
+        }
+
+        // Returns all available moves in the state
+        internal List<Move> GetMoves(Deck deck)
+        {
+            if (player == GameEngine.PLAYER)
+            {
+                return GetAllPlayerMoves();
+            }
+            else
+            {
+                return GetAllComputerMoves(deck);
+            }
+        }
+
+        // Returns a random move
+        internal Move GetRandomMove(Deck deck)
+        {
+            List<Move> moves = GetMoves(deck);
+            int index = random.Next(0, moves.Count);
+            return moves[index];
+        }
+
+        // used by MCTS
+        internal double GetResult()
+        {
+            return this.CalculateFinalScore();
         }
     }
 }
